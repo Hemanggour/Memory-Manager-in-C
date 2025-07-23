@@ -31,6 +31,7 @@ This file contains global structures and variables:
 Header file containing function declarations and necessary includes:
 - Function prototypes for all memory management functions
 - Required standard library includes
+- Necessary macros declarations
 
 ### memoryManager.c
 This file contains the implementation of memory management functions:
@@ -47,10 +48,16 @@ This file contains the implementation of memory management functions:
 This file contains test cases to validate the functionality of the memory manager.
 
 ## Usage
-To use the memory manager in your program:
+To use the memory manager in your program, include at very top:
 ```c
 #include "memoryManager.h"
 ```
+
+### Note:
+- No need to change your existing `malloc`, `calloc`, `realloc`, or `free` calls!
+These standard functions are automatically mapped to the custom memory management functions via predefined macros in memoryManager.h.
+This allows seamless integration without modifying your codebase.
+
 Compile and run:
 ```sh
 gcc tests.c -o tests
@@ -60,20 +67,23 @@ gcc tests.c -o tests
 ## Example Usage
 ```c
 #include "memoryManager.h"
+#include <stdio.h>
 
-int main() {
-    int *arr = (int *)MMalloc(5 * sizeof(int));
-    if (arr) {
+int main()
+{
+    int *arr = (int *)malloc(5 * sizeof(int));
+    if (arr)
+    {
         for (int i = 0; i < 5; i++)
             arr[i] = i + 1;
     }
-    MFree(arr);
+    free(arr);
 
-    arr = (int *)MMalloc(10 * sizeof(int));
-    arr = (int *)MMalloc(10 * sizeof(int));
-    MFree(arr);
+    arr = (int *)malloc(10 * sizeof(int));
+    arr = (int *)malloc(10 * sizeof(int));
+    free(arr);
 
-    arr = (int *)MMalloc(10 * sizeof(int));
+    arr = (int *)malloc(10 * sizeof(int));
     for (int i = 5; i < 10; i++)
         arr[i] = i + 1;
 
@@ -82,9 +92,9 @@ int main() {
     for (size_t i = 0; i < leaks->leakCount; i++)
         printf("Leak %zu: Address: %p, Size: %zu bytes\n", i + 1, leaks[i].address, leaks[i].size);
 
-    free(leaks); // Don't forget to free the array when done
+    MFreeLeakInfo(leaks); // Don't forget to free the `leaks` array when done
 
-    MFreeAll();
+    MFreeAll(); // Function to free all the allocated memory at once (Use with caution!)
     return 0;
 }
 ```

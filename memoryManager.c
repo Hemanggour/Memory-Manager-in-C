@@ -138,3 +138,11 @@ LeakInfo *MGetLeaks(void)
     }
     return leaks;
 }
+
+void MFreeLeakInfo(LeakInfo *leaks)
+{
+    if (!leaks)
+        return;
+
+    free(leaks);
+}
