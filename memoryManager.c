@@ -122,20 +122,35 @@ void *MRealloc(void *ptr, size_t size)
     return reallocMemory;
 }
 
-LeakInfo *MGetLeaks(void)
+LeakInfo *MGetLeaks(size_t *outLeakCount)
 {
-    size_t actualSize = 0, index = 0;
-    for (MemoryBlock *i = MemoryBlockHead; i; i = i->next)
-        actualSize++;
-    LeakInfo *leaks = (LeakInfo *)malloc(actualSize * sizeof(LeakInfo));
+    size_t count = 0;
+    MemoryBlock *curr = MemoryBlockHead;
+
+    while (curr)
+    {
+        count++;
+        curr = curr->next;
+    }
+
+    if (outLeakCount)
+        *outLeakCount = count;
+
+    if (count == 0)
+        return NULL;
+
+    LeakInfo *leaks = malloc(count * sizeof(LeakInfo));
     if (!leaks)
         return NULL;
-    leaks->leakCount = actualSize;
-    for (MemoryBlock *i = MemoryBlockHead; i; i = i->next, index++)
+
+    curr = MemoryBlockHead;
+    for (size_t i = 0; i < count && curr; i++)
     {
-        leaks[index].address = i->memory;
-        leaks[index].size = i->size;
+        leaks[i].address = curr->memory;
+        leaks[i].size = curr->size;
+        curr = curr->next;
     }
+
     return leaks;
 }
 

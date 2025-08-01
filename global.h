@@ -7,9 +7,8 @@ typedef struct MemoryBlock
 
 typedef struct LeakInfo
 {
-    size_t size;
-    size_t leakCount;
     void *address;
+    size_t size;
 } LeakInfo;
 
 MemoryBlock *MemoryBlockHead = NULL, *MemoryBlockTail = NULL;

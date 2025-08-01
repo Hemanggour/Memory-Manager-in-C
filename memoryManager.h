@@ -9,7 +9,7 @@
 #define free MFree
 
 MemoryBlock *getMemoryBlock(void);
-LeakInfo *MGetLeaks(void);
+LeakInfo *MGetLeaks(size_t *outLeaksCount);
 int MFreeAll(void);
 int MFree(void *);
 void *MMalloc(size_t);

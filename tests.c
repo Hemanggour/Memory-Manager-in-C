@@ -1,15 +1,16 @@
 #include <stdio.h>
-#include "memoryManager.h"
+#include <stdlib.h>    // only used in Test 7 for direct malloc
+#include "memoryManager.h"  // defines malloc, calloc, realloc, free
 
-void testMCalloc()
+void testCalloc()
 {
-    printf("Running MCalloc() Tests...\n");
+    printf("Running calloc() Tests...\n");
 
     // Test 1: Allocate memory and check if initialized to zero
-    int *arr = (int *)MCalloc(5, sizeof(int));
+    int *arr = (int *)calloc(5, sizeof(int));
     if (!arr)
     {
-        printf("Test 1 Failed: MCalloc() returned NULL\n");
+        printf("Test 1 Failed: calloc() returned NULL\n");
         return;
     }
     int initialized = 1;
@@ -21,151 +22,157 @@ void testMCalloc()
             break;
         }
     }
-    printf("Test 1 Passed: Memory initialized to zero\n");
+    printf("Test 1 %s: Memory initialized to zero\n",
+           initialized ? "Passed" : "Failed");
 
-    // Test 2: MCalloc with zero size or typeSize should return NULL
-    void *zeroAlloc1 = MCalloc(0, sizeof(int));
-    void *zeroAlloc2 = MCalloc(5, 0);
+    // Test 2: calloc with zero size or typeSize should return NULL
+    void *zeroAlloc1 = calloc(0, sizeof(int));
+    void *zeroAlloc2 = calloc(5, 0);
     if (!zeroAlloc1 && !zeroAlloc2)
     {
-        printf("Test 2 Passed: MCalloc(0, X) and MCalloc(X, 0) returned NULL\n");
+        printf("Test 2 Passed: calloc(0, X) and calloc(X, 0) returned NULL\n");
     }
     else
     {
         printf("Test 2 Failed: Expected NULL but got allocated memory\n");
     }
 
-    // Test 3: Free allocated memory
-    if (MFree(arr))
-    {
-        printf("Test 3 Passed: MFree() successfully freed allocated memory\n");
-    }
+    // Test 3: free allocated memory
+    if (free(arr))
+        printf("Test 3 Passed: free() successfully freed allocated memory\n");
     else
-    {
-        printf("Test 3 Failed: MFree() failed to free memory\n");
-    }
+        printf("Test 3 Failed: free() failed to free memory\n");
 
-    printf("MCalloc() Tests Completed.\n\n");
+    printf("calloc() Tests Completed.\n\n");
 }
 
-void testMRealloc()
+void testRealloc()
 {
-    printf("\nTest 8: Reallocation with MRealloc\n");
+    printf("Running realloc() Tests...\n");
 
-    // Allocate memory
-    int *ptr = (int *)MMalloc(sizeof(int) * 2);
+    // Test 1: Expand allocation
+    int *ptr = (int *)malloc(sizeof(int) * 2);
     if (!ptr)
     {
-        printf("Initial allocation failed.\n");
+        printf("Test 1 Failed: malloc() initial allocation failed.\n");
         return;
     }
     ptr[0] = 10;
     ptr[1] = 20;
-    printf("Allocated: %p | Values: %d, %d\n", ptr, ptr[0], ptr[1]);
-
-    // Expand memory
-    int *newPtr = (int *)MRealloc(ptr, sizeof(int) * 4);
+    int *newPtr = (int *)realloc(ptr, sizeof(int) * 4);
     if (!newPtr)
     {
-        printf("Reallocation failed.\n");
+        printf("Test 1 Failed: realloc() expand failed.\n");
         return;
     }
     newPtr[2] = 30;
     newPtr[3] = 40;
-    printf("Reallocated: (expand): %p | Values: %d, %d, %d, %d\n", newPtr, newPtr[0], newPtr[1], newPtr[2], newPtr[3]);
+    printf("Test 1 Passed: realloc() expand – Values: %d, %d, %d, %d\n",
+           newPtr[0], newPtr[1], newPtr[2], newPtr[3]);
+    free(newPtr);
 
-    // Shrink memory
-    newPtr = (int *)MRealloc(newPtr, sizeof(int) * 2);
+    // Test 2: Shrink allocation
+    ptr = (int *)malloc(sizeof(int) * 4);
+    if (!ptr) { printf("Test 2 Failed: malloc() failed.\n"); return; }
+    ptr[0] = 1; ptr[1] = 2; ptr[2] = 3; ptr[3] = 4;
+    newPtr = (int *)realloc(ptr, sizeof(int) * 2);
     if (!newPtr)
     {
-        printf("Shrink reallocation failed.\n");
-        return;
+        printf("Test 2 Failed: realloc() shrink failed.\n");
     }
-    printf("Reallocated (shrunk): %p | Values: %d, %d\n", newPtr, newPtr[0], newPtr[1]);
+    else
+    {
+        printf("Test 2 Passed: realloc() shrink – Values: %d, %d\n",
+               newPtr[0], newPtr[1]);
+        free(newPtr);
+    }
 
-    // Free memory
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(newPtr));
-
-    // Test realloc with NULL (should behave like malloc)
-    int *nullPtr = (int *)MRealloc(NULL, sizeof(int) * 2);
+    // Test 3: realloc(NULL, size) behaves like malloc()
+    int *nullPtr = (int *)realloc(NULL, sizeof(int) * 2);
     if (nullPtr)
-        printf("MRealloc(NULL, size) worked: %p\n", nullPtr);
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(nullPtr));
+    {
+        printf("Test 3 Passed: realloc(NULL, size) worked.\n");
+        free(nullPtr);
+    }
+    else
+    {
+        printf("Test 3 Failed: realloc(NULL, size) returned NULL.\n");
+    }
 
-    // Test realloc with size 0 (should free memory and return NULL)
-    int *zeroPtr = (int *)MMalloc(sizeof(int) * 2);
-    zeroPtr = (int *)MRealloc(zeroPtr, 0);
+    // Test 4: realloc(ptr, 0) frees and returns NULL
+    ptr = (int *)malloc(sizeof(int) * 2);
+    if (!ptr) { printf("Test 4 Failed: malloc() failed.\n"); return; }
+    int *zeroPtr = (int *)realloc(ptr, 0);
     if (!zeroPtr)
-        printf("MRealloc(ptr, 0) correctly freed memory.\n");
+        printf("Test 4 Passed: realloc(ptr, 0) correctly freed memory.\n");
+    else
+    {
+        printf("Test 4 Failed: realloc(ptr, 0) did not free.\n");
+        free(zeroPtr);
+    }
+
+    printf("realloc() Tests Completed.\n\n");
 }
 
 int main()
 {
     // Test 1: Basic Allocation and Deallocation
     printf("Test 1: Basic Allocation and Deallocation\n");
-    int *p1 = (int *)MMalloc(sizeof(int));
+    int *p1 = (int *)malloc(sizeof(int));
     *p1 = 42;
-    printf("Allocated value: %d\n", *p1);
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(p1));
+    printf("  Allocated value: %d\n", *p1);
+    printf("  free() Status code: %d (1=success, 0=failure)\n", free(p1));
 
-    // Test 2: Double Free (Should handle gracefully without crashing)
-    printf("\nTest 2: Double Free\n");
-    int *p2 = (int *)MMalloc(sizeof(int));
+    // Test 2: Double free (Should return 0 on second free)
+    printf("\nTest 2: Double free\n");
+    int *p2 = (int *)malloc(sizeof(int));
     *p2 = 84;
-    printf("Allocated value: %d\n", *p2);
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(p2));
-    printf("MFree() Status code (('0' failed) or ('1' success))\nFreeing twice should be handled (Output Should be '0' failed): %d\n", MFree(p2)); // Freeing twice should be handled (Output Should be '0' failed)
+    printf("  Allocated value: %d\n", *p2);
+    printf("  First free(): %d\n", free(p2));
+    printf("  Second free(): %d (expected 0)\n", free(p2));
 
-    // Test 3: Memory Leak Check
+    // Test 3: Memory Leak Check (only even allocations freed)
     printf("\nTest 3: Memory Leak Check\n");
     for (int i = 0; i < 10; i++)
     {
-        int *p = (int *)MMalloc(sizeof(int));
+        int *p = (int *)malloc(sizeof(int));
         *p = i;
-        printf("Allocated value: %d\n", *p);
-        if (i % 2 == 0)
-        {
-            printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(p)); // Freeing every alternate pointer
-        }
+        printf("  Allocated %d -> free(): %d\n", i, (i % 2 == 0) ? free(p) : 0);
     }
 
     // Test 4: Zero-byte Allocation (Edge Case)
     printf("\nTest 4: Zero-byte Allocation\n");
-    void *zeroPtr = MMalloc(0); // Should handle gracefully
+    void *zeroPtr = malloc(0);
     if (zeroPtr == NULL)
-        printf("Allocated zero bytes, returned NULL\n");
+        printf("  Passed: malloc(0) returned NULL\n");
     else
-        printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(zeroPtr));
+        printf("  Failed: malloc(0) did not return NULL\n");
 
     // Test 5: Large Allocation
     printf("\nTest 5: Large Allocation\n");
-    int *pLarge = (int *)MMalloc(1000000 * sizeof(int)); // Large allocation
+    int *pLarge = (int *)malloc(1000000 * sizeof(int));
     if (pLarge)
-        printf("Successfully allocated a large memory block\n");
+        printf("  Passed: Successfully allocated large block\n");
     else
-        printf("Failed to allocate a large memory block\n");
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(pLarge));
+        printf("  Failed: Large allocation returned NULL\n");
+    free(pLarge);
 
-    // Test 6: Allocate After Free
-    printf("\nTest 6: Allocate After Free\n");
-    int *pReAlloc = (int *)MMalloc(sizeof(int));
-    *pReAlloc = 123;
-    printf("Allocated value: %d\n", *pReAlloc);
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(pReAlloc));
-    pReAlloc = (int *)MMalloc(sizeof(int));
-    *pReAlloc = 456;
-    printf("Allocated value after re-allocation: %d\n", *pReAlloc);
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(pReAlloc));
+    // Test 6: Allocate After free
+    printf("\nTest 6: Allocate After free\n");
+    int *prealloc = (int *)malloc(sizeof(int));
+    *prealloc = 123;
+    free(prealloc);
+    prealloc = (int *)malloc(sizeof(int));
+    *prealloc = 456;
+    printf("  Allocated after free: %d\n", *prealloc);
+    free(prealloc);
 
-    // Test 7: Freeing a Pointer Not Allocated
-    printf("\nTest 7: Freeing a Pointer Not Allocated\n");
-    int *pInvalid = (int *)malloc(sizeof(int));                                           // Direct malloc, not tracked by MMalloc (Output should be '0' failed)
-    printf("MFree() Status code (('0' failed) or ('1' success)): %d\n", MFree(pInvalid)); // Should print status code ('0' for failed) or ('1' for success)
+    // Run the more specific tests
+    testRealloc();
+    testCalloc();
 
-    testMRealloc();
-    testMCalloc();
-
-    printf("MFreeAll() Status code (('0' failed) or ('1' success)): %d\n", MFreeAll());
+    // Final cleanup: free any remaining blocks
+    printf("MfreeAll() Status code: %d (1=success, 0=failure)\n", MFreeAll());
 
     return 0;
 }

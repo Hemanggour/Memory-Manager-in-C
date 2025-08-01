@@ -87,12 +87,23 @@ int main()
     for (int i = 5; i < 10; i++)
         arr[i] = i + 1;
 
-    LeakInfo *leaks = MGetLeaks();
+    size_t leakCount = 0;
+    LeakInfo *leaks = getLeaks(&leakCount);
 
-    for (size_t i = 0; i < leaks->leakCount; i++)
-        printf("Leak %zu: Address: %p, Size: %zu bytes\n", i + 1, leaks[i].address, leaks[i].size);
+    if (leaks)
+    {
+        for (size_t i = 0; i < leakCount; i++)
+        {
+            printf("Leak %zu: Address = %p, Size = %zu bytes\n",
+                   i + 1, leaks[i].address, leaks[i].size);
+        }
 
-    MFreeLeakInfo(leaks); // Don't forget to free the `leaks` array when done
+        MFreeLeakInfo(leaks); // Don't forget to free the `leaks` array when done
+    }
+    else
+    {
+        printf("No memory leaks detected.\n");
+    }
 
     MFreeAll(); // Function to free all the allocated memory at once (Use with caution!)
     return 0;
